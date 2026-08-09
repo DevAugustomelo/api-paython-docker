@@ -1,0 +1,43 @@
+name: api-automotiva-backend
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # Aponta para o serviço "db" que está na mesma rede
+      - MONGO_URL=mongodb://db:27017/loja_automotiva
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - rede-global
+
+  db:
+    image: mongo:8.0-noble
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'db.runCommand({ping:1})' | mongosh localhost:27017/test --quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rede-global
+
+volumes:
+  mongodata:
+    driver: local
+
+networks:
+  # Indica ao Docker Compose para usar a rede que será criada manualmente
+  rede-global:
+    external: true
+    name: rede-automotiva-global
